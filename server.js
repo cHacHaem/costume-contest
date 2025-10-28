@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // === CONFIG ===
-const SUBMISSION_END = new Date("2025-31-27T18:55:00"); // submission cutoff
+const SUBMISSION_END = new Date("2025-10-31T18:55:00"); // submission cutoff
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 
 // === DATABASE (Render PostgreSQL Example) ===
