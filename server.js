@@ -46,7 +46,7 @@ const upload = multer({ storage });
                 costume_name TEXT NOT NULL,
                 categories TEXT NOT NULL,
                 image TEXT,
-                votes_Homemade/DIY INT DEFAULT 0,
+                votes_homemade_diy INT DEFAULT 0,
                 votes_Scariest INT DEFAULT 0,
                 votes_Funniest INT DEFAULT 0,
                 votes_Overall INT DEFAULT 0,
@@ -113,27 +113,34 @@ app.get("/api/entries", async (req, res) => {
 
 // Voting
 app.post("/api/vote/:id", async (req, res) => {
-    try {
-        const id = req.params.id;
-        const { category } = req.body;
+  try {
+    const id = req.params.id;
+    const { category } = req.body;
 
-        // Validate category
-        const validCategories = ["Overal", "Scariest", "Funniest", "Homemade/DIY", "Family"];
-        if (!validCategories.includes(category)) {
-            return res.status(400).json({ error: "Invalid category" });
-        }
-
-        // Update votes for the specific category
-        const column = `votes_${category}`;
-        await pool.query(`UPDATE entries SET ${column} = ${column} + 1 WHERE id = $1`, [id]);
-
-        // Get updated votes for the category
-        const updated = await pool.query(`SELECT ${column} FROM entries WHERE id = $1`, [id]);
-        res.json({ success: true, votes: updated.rows[0][column] });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Database error" });
+    const validCategories = ["Overall", "Scariest", "Funniest", "Homemade/DIY", "Family"];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({ error: "Invalid category" });
     }
+
+    // convert category to column name safely
+    const columnMap = {
+      "Overall": "votes_overall",
+      "Scariest": "votes_scariest",
+      "Funniest": "votes_funniest",
+      "Homemade/DIY": "votes_homemade_diy",
+      "Family": "votes_family"
+    };
+
+    const column = columnMap[category];
+    await pool.query(`UPDATE entries SET ${column} = ${column} + 1 WHERE id = $1`, [id]);
+
+    const updated = await pool.query(`SELECT ${column} FROM entries WHERE id = $1`, [id]);
+    res.json({ success: true, votes: updated.rows[0][column] });
+  } catch (err) {
+    console.error("❌ Vote error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
+
 
 app.listen(PORT, () => console.log(`🎃 Server running on port ${PORT}`));

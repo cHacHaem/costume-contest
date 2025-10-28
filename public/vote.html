@@ -17,7 +17,7 @@
   </div>
 
   <script>
-    const categories = ["Scariest", "Funniest", "Funniest", "Homemade/DIY", "Family"];
+    const categories = ["Scariest", "Funniest", "Overal", "Homemade/DIY", "Family"];
     let currentCategoryIndex = 0;
     let entries = [];
     const votes = {}; // e.g. { Scariest: 2, Funniest: 5, ... }
@@ -30,7 +30,11 @@
 
     function showCategory() {
       const category = categories[currentCategoryIndex];
-      document.getElementById("categoryTitle").textContent = `🗳️ Vote for the ${category} Costume`;
+      let say = category;
+      if (say === "Overal") say = "Best Overall";
+      if (say === "Homemade/DIY") say = "Best Homemade/DIY";
+        if (say === "Family") say = "Best Family";
+      document.getElementById("categoryTitle").textContent = `🗳️ Vote for the ${say} Costume`;
 
       const gallery = document.getElementById("gallery");
       gallery.innerHTML = "";
