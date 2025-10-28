@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vote for Costumes 🎃</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1 id="categoryTitle">🗳️ Vote for the Scariest Costume</h1>
+
+  <div id="gallery" class="gallery"></div>
+
+  <div id="voteNav">
+    <button id="prevBtn" disabled>⬅️ Previous</button>
+    <button id="nextBtn">Next ➡️</button>
+  </div>
+
+  <script>
+    const categories = ["Scariest", "Funniest", "Funniest", "Homemade/DIY", "Family"];
+    let currentCategoryIndex = 0;
+    let entries = [];
+    const votes = {}; // e.g. { Scariest: 2, Funniest: 5, ... }
+
+    async function loadEntries() {
+      const res = await fetch('/api/entries');
+      entries = await res.json();
+      showCategory();
+    }
+
+    function showCategory() {
+      const category = categories[currentCategoryIndex];
+      document.getElementById("categoryTitle").textContent = `🗳️ Vote for the ${category} Costume`;
+
+      const gallery = document.getElementById("gallery");
+      gallery.innerHTML = "";
+
+      // Filter entries that entered this category
+      const filtered = entries.filter(e => e.categories.includes(category));
+
+      if (filtered.length === 0) {
+        gallery.innerHTML = `<p>No entries yet for ${category}.</p>`;
+        return;
+      }
+
+      filtered.forEach(entry => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <img src="${entry.image}" alt="${entry.costumeName}">
+          <h3>${entry.costumeName}</h3>
+          <p>By ${entry.name}</p>
+          <label>
+            <input type="radio" name="vote" value="${entry.id}" ${votes[category] === entry.id ? "checked" : ""}>
+            Select this costume
+          </label>
+        `;
+        gallery.appendChild(card);
+      });
+
+      // Update button states
+      document.getElementById("prevBtn").disabled = currentCategoryIndex === 0;
+      document.getElementById("nextBtn").textContent =
+        currentCategoryIndex === categories.length - 1 ? "Submit Votes 🧡" : "Next ➡️";
+    }
+
+    // Handle navigation
+    document.getElementById("prevBtn").addEventListener("click", () => {
+      saveVote();
+      if (currentCategoryIndex > 0) {
+        currentCategoryIndex--;
+        showCategory();
+      }
+    });
+
+    document.getElementById("nextBtn").addEventListener("click", async () => {
+      saveVote();
+      if (currentCategoryIndex < categories.length - 1) {
+        currentCategoryIndex++;
+        showCategory();
+      } else {
+        await submitVotes();
+      }
+    });
+
+    function saveVote() {
+      const category = categories[currentCategoryIndex];
+      const selected = document.querySelector('input[name="vote"]:checked');
+      if (selected) {
+        votes[category] = parseInt(selected.value);
+      }
+    }
+
+    async function submitVotes() {
+      const categoriesVoted = Object.keys(votes);
+      if (categoriesVoted.length < categories.length) {
+        alert("Please vote for each category before submitting!");
+        return;
+      }
+
+      for (const id of Object.values(votes)) {
+        await fetch(`/api/vote/${id}`, { method: 'POST' });
+      }
+
+      document.body.innerHTML = `
+        <h1>🎉 Thanks for Voting!</h1>
+        <p>Your votes have been recorded.</p>
+      `;
+    }
+
+    loadEntries();
+  </script>
+</body>
+</html>

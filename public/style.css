@@ -1,0 +1,201 @@
+/* 🎃 Spooky Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Creepster&display=swap');
+
+:root {
+  --orange: #ff7518;
+  --dark-green: #0b3d0b;
+  --black: #000;
+  --gray-green: #111c11;
+  --text-light: #f8f8f8;
+}
+
+/* General Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Creepster', cursive;
+  background: radial-gradient(circle at center, var(--dark-green) 0%, var(--black) 80%);
+  color: var(--text-light);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 20px;
+}
+
+h1 {
+  font-size: 2.8rem;
+  color: var(--orange);
+  text-shadow: 2px 2px 8px black;
+  margin: 1rem 0 2rem;
+  text-align: center;
+}
+
+form {
+  background: rgba(20, 20, 20, 0.9);
+  border: 2px solid var(--orange);
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 0 20px rgba(255, 117, 24, 0.5);
+}
+
+label {
+  display: block;
+  font-size: 1.2rem;
+  margin: 15px 0 5px;
+  color: var(--orange);
+}
+
+input[type="text"],
+input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--dark-green);
+  background: #111;
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+.checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin-top: 10px;
+}
+
+.checkboxes label {
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--orange);
+  color: var(--black);
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.3s ease;
+}
+button:hover {
+  background: #e26d00;
+  transform: scale(1.03);
+}
+
+/* 📱 Responsive layout for mobile devices */
+@media (max-width: 600px) {
+  h1 {
+    font-size: 2rem;
+    margin-top: 1.2rem;
+  }
+
+  form {
+    padding: 15px;
+    max-width: 95%;
+  }
+
+  button {
+    font-size: 1.2rem;
+  }
+}
+
+/* 🧛 Voting Page Gallery */
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.card {
+  background: rgba(30, 30, 30, 0.9);
+  border: 2px solid var(--dark-green);
+  border-radius: 10px;
+  padding: 10px;
+  width: 45%;
+  max-width: 220px;
+  box-shadow: 0 0 10px var(--orange);
+  transition: transform 0.2s;
+}
+.card:hover {
+  transform: scale(1.03);
+}
+
+.card img {
+  width: 100%;
+  border-radius: 8px;
+  border: 2px solid var(--orange);
+}
+
+.card h3 {
+  color: var(--orange);
+  font-size: 1.2rem;
+  margin-top: 10px;
+}
+
+.card p {
+  font-size: 0.9rem;
+  color: #ddd;
+}
+
+.card button {
+  margin-top: 8px;
+  background: var(--orange);
+  color: var(--black);
+  border-radius: 6px;
+  border: none;
+  padding: 8px 0;
+  width: 100%;
+  font-size: 1rem;
+}
+/* Voting Navigation */
+#voteNav {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 400px;
+  margin: 20px auto;
+}
+
+#voteNav button {
+  flex: 1;
+  margin: 0 5px;
+  padding: 14px;
+  font-size: 1.2rem;
+  background: var(--orange);
+  color: var(--black);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.3s ease;
+}
+
+#voteNav button:disabled {
+  background: #444;
+  color: #999;
+  cursor: not-allowed;
+}
+
+#voteNav button:hover:not(:disabled) {
+  background: #e26d00;
+  transform: scale(1.03);
+}
+
+/* Make radio buttons larger for mobile */
+input[type="radio"] {
+  transform: scale(1.5);
+  margin-right: 8px;
+}
