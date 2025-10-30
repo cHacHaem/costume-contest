@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 3000;
 
 // === CONFIG ===
 const SUBMISSION_END = new Date("2025-10-31T18:55:00"); // submission cutoff
+const VOTING_END = new Date("2025-11-07T18:55:00"); // voting cutoff
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 
 // === DATABASE (Render PostgreSQL Example) ===
@@ -61,6 +62,50 @@ const upload = multer({ storage });
 })();
 
 // === ROUTES ===
+// 🧙‍♂️ Add near the bottom of server.js
+
+// GET results for each category
+app.get('/api/results', async (req, res) => {
+  try {
+    const categories = [
+      'homemade_diy',
+      'Scariest',
+      'Funniest',
+      'Overall',
+      'Family'
+    ];
+
+    const results = {};
+
+    for (const category of categories) {
+      const column = `votes_${category}`;
+      const { rows } = await pool.query(`
+        SELECT id, name, costume_name, image, ${column} AS votes
+        FROM entries
+        ORDER BY ${column} DESC
+        LIMIT 1
+      `);
+
+      results[category] = rows[0] || null;
+    }
+
+    res.json(results);
+  } catch (err) {
+    console.error('❌ Error loading results', err);
+    res.status(500).json({ error: 'Failed to load results' });
+  }
+});
+
+app.post('/api/clear', async (req, res) => {
+  try {
+await pool.query('DROP TABLE IF EXISTS entries;');
+
+    res.json({ message: 'Costume table cleared 🎃' });
+  } catch (err) {
+    console.error('Error clearing table:', err);
+    res.status(500).json({ error: 'Failed to clear table' });
+  }
+});
 
 // Check if submission is open
 app.get("/api/status", (req, res) => {
@@ -116,12 +161,13 @@ app.post("/api/vote/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const { category } = req.body;
-
+if (new Date() >= VOTING_END) {
+      return res.status(403).json({ error: "Voting period has ended!" });
+    }
     const validCategories = ["Overall", "Scariest", "Funniest", "Homemade/DIY", "Family"];
     if (!validCategories.includes(category)) {
       return res.status(400).json({ error: "Invalid category" });
     }
-
     // convert category to column name safely
     const columnMap = {
       "Overall": "votes_overall",

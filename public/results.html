@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎃 Contest Results</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🏆 Halloween Costume Contest Results</h1>
+
+  <div id="resultsContainer" class="gallery"></div>
+
+  <script>
+    async function loadResults() {
+      const res = await fetch('/api/results');
+      const data = await res.json();
+
+      const container = document.getElementById('resultsContainer');
+      container.innerHTML = '';
+
+      for (const category in data) {
+        const winner = data[category];
+        const div = document.createElement('div');
+        div.className = 'card';
+
+        if (winner) {
+          div.innerHTML = `
+            <h2>${category.replace('_', ' ')}</h2>
+            <img src="${winner.image}" alt="${winner.costume_name}">
+            <h3>${winner.costume_name}</h3>
+            <p>By ${winner.name}</p>
+            <p>Votes: ${winner.votes}</p>
+          `;
+        } else {
+          div.innerHTML = `
+            <h2>${category.replace('_', ' ')}</h2>
+            <p>No entries yet</p>
+          `;
+        }
+
+        container.appendChild(div);
+      }
+    }
+
+    loadResults();
+  </script>
+</body>
+</html>

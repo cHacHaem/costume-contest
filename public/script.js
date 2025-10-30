@@ -8,8 +8,9 @@
 
 document.getElementById('contestForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-
   const form = e.target;
+const submitButton = form.querySelector('button[type=submit]');
+submitButton.disabled = true;
   const formData = new FormData(form);
   const categories = Array.from(form.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value);
   formData.append('categories', JSON.stringify(categories));
@@ -21,9 +22,9 @@ document.getElementById('contestForm').addEventListener('submit', async (e) => {
 
   const result = await res.json();
   if (result.success) {
-    alert('✅ Costume submitted!');
+    document.getElementById('formMessage').textContent = '✅ Submission successful! Thank you for entering the contest.';
     form.reset();
   } else {
-    alert('❌ ' + result.error);
+    document.getElementById('formMessage').textContent = '❌ Submission failed: ' + (result.error || 'Unknown error');
   }
 });

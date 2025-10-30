@@ -199,3 +199,34 @@ input[type="radio"] {
   transform: scale(1.5);
   margin-right: 8px;
 }
+#formMessage {
+  margin-top: 15px;
+  font-size: 1rem;
+  text-align: center;
+}
+/* 🎖 Results Page */
+#resultsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+
+#resultsContainer .card {
+  width: 250px;
+  border: 3px solid var(--orange);
+  text-align: center;
+}
+
+#resultsContainer .card h2 {
+  font-size: 1.5rem;
+  color: var(--orange);
+  margin-bottom: 10px;
+  text-shadow: 0 0 6px black;
+}
+
+#resultsContainer .card img {
+  border: 2px solid var(--dark-green);
+  box-shadow: 0 0 10px var(--orange);
+}
