@@ -140,7 +140,8 @@ app.post("/api/submit", upload.single("photo"), async (req, res) => {
 // Get all entries (for voting)
 app.get("/api/entries", async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM entries ORDER BY votes DESC");
+    const result = await pool.query("SELECT * FROM entries ORDER BY id DESC");
+
     const entries = result.rows.map(r => ({
       id: r.id,
       name: r.name,
