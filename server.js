@@ -10,13 +10,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // === CONFIG ===
-const SUBMISSION_END = new Date("2025-11-31T18:55:00"); // submission cutoff
-const VOTING_END = new Date("2025-11-07T18:55:00"); // voting cutoff
+const SUBMISSION_END = new Date("2025-11-30T18:55:00"); // ✅ fixed invalid date
+const VOTING_END = new Date("2025-12-07T18:55:00");
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 
-// === DATABASE (Render PostgreSQL Example) ===
+// === DATABASE ===
 const pool = new Pool({
-  connectionString: "postgresql://costume_contest_user:mIRL0Gzd8Ohf7xBKt7IRx2v37hVXBdjr@dpg-d3vv3595pdvs7391jrq0-a.virginia-postgres.render.com/costume_contest",
+  connectionString:
+    "postgresql://costume_contest_user:mIRL0Gzd8Ohf7xBKt7IRx2v37hVXBdjr@dpg-d3vv3595pdvs7391jrq0-a.virginia-postgres.render.com/costume_contest",
   ssl: { rejectUnauthorized: false },
 });
 
@@ -26,7 +27,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-// === MULTER CONFIG (temporary local storage before saving to DB) ===
+// === UPLOADS ===
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
@@ -44,7 +45,7 @@ const upload = multer({ storage });
         name TEXT NOT NULL,
         costume_name TEXT NOT NULL,
         categories TEXT NOT NULL,
-        image_data TEXT, -- Base64 encoded image
+        image_data TEXT,
         votes_homemade_diy INT DEFAULT 0,
         votes_Scariest INT DEFAULT 0,
         votes_Funniest INT DEFAULT 0,
@@ -59,42 +60,23 @@ const upload = multer({ storage });
   }
 })();
 
-// === ROUTES ===
-
-// 🏁 Clear database (dev only)
+// === CLEAR DATABASE (DEV) ===
 app.post("/api/clear", async (req, res) => {
   try {
-    await pool.query("DROP TABLE IF EXISTS entries;");
-    await pool.query(`
-      CREATE TABLE entries (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        costume_name TEXT NOT NULL,
-        categories TEXT NOT NULL,
-        image_data TEXT,
-        votes_homemade_diy INT DEFAULT 0,
-        votes_Scariest INT DEFAULT 0,
-        votes_Funniest INT DEFAULT 0,
-        votes_Overall INT DEFAULT 0,
-        votes_Family INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-    res.json({ message: "🎃 Table cleared and recreated" });
+    await pool.query("TRUNCATE TABLE entries RESTART IDENTITY;");
+    res.json({ message: "🎃 Table cleared" });
   } catch (err) {
     console.error("Error clearing table:", err);
     res.status(500).json({ error: "Failed to clear table" });
   }
 });
 
-// 🕒 Check submission window
+// === CHECK SUBMISSION STATUS ===
 app.get("/api/status", (req, res) => {
-  const now = new Date();
-  res.json({ open: now < SUBMISSION_END });
+  res.json({ open: new Date() < SUBMISSION_END });
 });
 
-// 📸 Submit costume
-// 📸 Submit costume
+// === SUBMIT COSTUME ===
 app.post("/api/submit", upload.single("photo"), async (req, res) => {
   const now = new Date();
   if (now >= SUBMISSION_END) {
@@ -104,7 +86,7 @@ app.post("/api/submit", upload.single("photo"), async (req, res) => {
   try {
     const { name, costumeName, categories } = req.body;
 
-    // Parse and ensure "Overall" is always included
+    // parse categories safely
     let cats = [];
     try {
       cats = JSON.parse(categories);
@@ -113,10 +95,13 @@ app.post("/api/submit", upload.single("photo"), async (req, res) => {
       cats = [];
     }
 
-    if (!cats.includes("Overall")) {
+    // normalize capitalization and add "Overall" if missing
+    cats = cats.map((c) => c.trim());
+    if (!cats.some((c) => c.toLowerCase() === "overall")) {
       cats.push("Overall");
     }
 
+    // handle image file
     let imageData = null;
     if (req.file) {
       const fileBuffer = await fs.promises.readFile(req.file.path);
@@ -124,6 +109,7 @@ app.post("/api/submit", upload.single("photo"), async (req, res) => {
       await fs.promises.unlink(req.file.path); // remove temp file
     }
 
+    // insert into db
     await pool.query(
       "INSERT INTO entries (name, costume_name, categories, image_data) VALUES ($1, $2, $3, $4)",
       [name, costumeName, JSON.stringify(cats), imageData]
@@ -136,55 +122,42 @@ app.post("/api/submit", upload.single("photo"), async (req, res) => {
   }
 });
 
-
-// 📜 Get all entries (for voting)
+// === GET ENTRIES ===
 app.get("/api/entries", async (req, res) => {
   try {
-    const result = await pool.query(`
+    const { rows } = await pool.query(`
       SELECT *,
         (votes_homemade_diy + votes_Scariest + votes_Funniest + votes_Overall + votes_Family) AS total_votes
       FROM entries
-      ORDER BY total_votes DESC
+      ORDER BY id DESC
     `);
 
-    const entries = result.rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      costumeName: r.costume_name,
-      categories: JSON.parse(r.categories),
-      image: r.image_data ? `data:image/jpeg;base64,${r.image_data}` : null,
-      votes: r.total_votes,
-    }));
-
-    res.json(entries);
+    res.json(
+      rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        costumeName: r.costume_name,
+        categories: JSON.parse(r.categories),
+        image: r.image_data ? `data:image/jpeg;base64,${r.image_data}` : null,
+        votes: r.total_votes,
+      }))
+    );
   } catch (err) {
     console.error("❌ /api/entries error:", err);
     res.status(500).json({ error: "Database error" });
   }
 });
 
-// 🗳️ Voting
+// === VOTING ===
 app.post("/api/vote/:id", async (req, res) => {
   try {
-    const id = req.params.id;
+    const { id } = req.params;
     const { category } = req.body;
 
-    if (new Date() >= VOTING_END) {
+    if (new Date() >= VOTING_END)
       return res.status(403).json({ error: "Voting period has ended!" });
-    }
 
-    const validCategories = [
-      "Overall",
-      "Scariest",
-      "Funniest",
-      "Homemade/DIY",
-      "Family",
-    ];
-    if (!validCategories.includes(category)) {
-      return res.status(400).json({ error: "Invalid category" });
-    }
-
-    const columnMap = {
+    const validCategories = {
       Overall: "votes_Overall",
       Scariest: "votes_Scariest",
       Funniest: "votes_Funniest",
@@ -192,16 +165,12 @@ app.post("/api/vote/:id", async (req, res) => {
       Family: "votes_Family",
     };
 
-    const column = columnMap[category];
-    await pool.query(
-      `UPDATE entries SET ${column} = ${column} + 1 WHERE id = $1`,
-      [id]
-    );
+    const column = validCategories[category];
+    if (!column) return res.status(400).json({ error: "Invalid category" });
 
-    const updated = await pool.query(
-      `SELECT ${column} FROM entries WHERE id = $1`,
-      [id]
-    );
+    await pool.query(`UPDATE entries SET ${column} = ${column} + 1 WHERE id = $1`, [id]);
+    const updated = await pool.query(`SELECT ${column} FROM entries WHERE id = $1`, [id]);
+
     res.json({ success: true, votes: updated.rows[0][column] });
   } catch (err) {
     console.error("❌ Vote error:", err);
@@ -209,7 +178,7 @@ app.post("/api/vote/:id", async (req, res) => {
   }
 });
 
-// 🏆 Results per category
+// === RESULTS ===
 app.get("/api/results", async (req, res) => {
   try {
     const categories = ["homemade_diy", "Scariest", "Funniest", "Overall", "Family"];
@@ -235,7 +204,7 @@ app.get("/api/results", async (req, res) => {
 
     res.json(results);
   } catch (err) {
-    console.error("❌ Error loading results", err);
+    console.error("❌ Results error:", err);
     res.status(500).json({ error: "Failed to load results" });
   }
 });
