@@ -17,6 +17,13 @@
   </div>
 
   <script>
+    if (localStorage.getItem('hasVoted')) {
+      document.body.innerHTML = `
+        <h1>🎉 You've Already Voted!</h1>
+        <p>Thank you for participating.</p>
+        <a href="/results.html">Click Here For The Results</a>
+      `;
+    }
     const categories = ["Scariest", "Funniest", "Overall", "Homemade/DIY", "Family"];
     let currentCategoryIndex = 0;
     let entries = [];
@@ -112,6 +119,7 @@
         <p>Your votes have been recorded.</p>
         <a href="/results.html">Click Here For The Results</a>
       `;
+      localStorage.setItem('hasVoted', 'true');
     }
 
     loadEntries();
