@@ -94,6 +94,7 @@ app.get("/api/status", (req, res) => {
 });
 
 // 📸 Submit costume
+// 📸 Submit costume
 app.post("/api/submit", upload.single("photo"), async (req, res) => {
   const now = new Date();
   if (now >= SUBMISSION_END) {
@@ -102,13 +103,25 @@ app.post("/api/submit", upload.single("photo"), async (req, res) => {
 
   try {
     const { name, costumeName, categories } = req.body;
-    const cats = JSON.parse(categories);
+
+    // Parse and ensure "Overall" is always included
+    let cats = [];
+    try {
+      cats = JSON.parse(categories);
+      if (!Array.isArray(cats)) cats = [];
+    } catch {
+      cats = [];
+    }
+
+    if (!cats.includes("Overall")) {
+      cats.push("Overall");
+    }
 
     let imageData = null;
     if (req.file) {
-      const fileBuffer = fs.readFileSync(req.file.path);
+      const fileBuffer = await fs.promises.readFile(req.file.path);
       imageData = fileBuffer.toString("base64");
-      fs.unlinkSync(req.file.path); // remove temporary file
+      await fs.promises.unlink(req.file.path); // remove temp file
     }
 
     await pool.query(
@@ -122,6 +135,7 @@ app.post("/api/submit", upload.single("photo"), async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
 
 // 📜 Get all entries (for voting)
 app.get("/api/entries", async (req, res) => {
