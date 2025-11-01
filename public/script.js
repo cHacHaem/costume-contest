@@ -22,7 +22,7 @@ submitButton.disabled = true;
 
   const result = await res.json();
   if (result.success) {
-    document.getElementById('formMessage').textContent = '✅ Submission successful! Thank you for entering the contest. Come back to vote when submissions close at 11:30. Refresh the page to submit another entry.';
+    document.getElementById('formMessage').textContent = '✅ Submission successful! Thank you for entering the contest. Come back to vote when submissions close at 12:30. Refresh the page to submit another entry.';
     form.reset();
   } else {
     document.getElementById('formMessage').textContent = '❌ Submission failed: ' + (result.error || 'Unknown error');
