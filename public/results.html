@@ -11,39 +11,46 @@
 
   <div id="resultsContainer" class="gallery"></div>
 
-  <script>
-    async function loadResults() {
-      const res = await fetch('/api/results');
-      const data = await res.json();
+<script>
+async function loadResults() {
+  const res = await fetch('/api/results');
+  const data = await res.json();
+  console.log(data);
 
-      const container = document.getElementById('resultsContainer');
-      container.innerHTML = '';
+  const container = document.getElementById('resultsContainer');
+  container.innerHTML = '';
 
-      for (const category in data) {
-        const winner = data[category];
-        const div = document.createElement('div');
-        div.className = 'card';
+  for (const category in data) {
+    const winners = data[category];
+    const div = document.createElement('div');
+    div.className = 'category';
+    div.innerHTML = `<h2>${category.replace('_', ' ')}</h2>`;
 
-        if (winner) {
-          div.innerHTML = `
-            <h2>${category.replace('_', ' ')}</h2>
-            <img src="${winner.image}" alt="${winner.costume_name}">
-            <h3>${winner.costume_name}</h3>
-            <p>By ${winner.name}</p>
-            <p>Votes: ${winner.votes}</p>
-          `;
-        } else {
-          div.innerHTML = `
-            <h2>${category.replace('_', ' ')}</h2>
-            <p>No entries yet</p>
-          `;
-        }
-
-        container.appendChild(div);
-      }
+    if (winners && winners.length > 0) {
+      const placeNames = ['1st', '2nd', '3rd'];
+      winners.forEach((w, i) => {
+        const placeClass = i === 0 ? 'first-place' : i === 1 ? 'second-place' : 'third-place';
+        div.innerHTML += `
+          <div class="winner">
+            <img src="${w.image}" alt="${w.costumeName}">
+            <h3>${w.costumeName}</h3>
+            <p>By ${w.name}</p>
+            <p>Votes: ${w.votes}</p>
+            <span class="place ${placeClass}">${placeNames[i]} Place</span>
+          </div>
+        `;
+      });
+    } else {
+      div.innerHTML += `<p>No entries yet</p>`;
     }
 
-    loadResults();
-  </script>
+    container.appendChild(div);
+  }
+}
+
+loadResults();
+</script>
+
+
 </body>
 </html>

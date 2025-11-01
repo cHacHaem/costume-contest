@@ -32,6 +32,14 @@
     async function loadEntries() {
       const res = await fetch('/api/entries');
       entries = await res.json();
+    if (res.status === 403) {
+      document.body.innerHTML = `
+        <h1>Voting is Closed</h1>
+        <p>Thank you for your interest. Voting has ended.</p>
+        <a href="/results.html">Click Here For The Results</a>
+      `;
+      return;
+    }
       showCategory();
       console.log(entries);
     }
@@ -73,7 +81,7 @@
       // Update button states
       document.getElementById("prevBtn").disabled = currentCategoryIndex === 0;
       document.getElementById("nextBtn").textContent =
-        currentCategoryIndex === categories.length - 1 ? "Submit Votes 🧡" : "Next ➡️";
+        currentCategoryIndex === categories.length - 1 ? "Submit Votes" : "Next ➡️";
     }
 
     // Handle navigation
@@ -91,6 +99,7 @@
         currentCategoryIndex++;
         showCategory();
       } else {
+        document.getElementById("nextBtn").disabled = true;
         await submitVotes();
       }
     });
@@ -103,24 +112,30 @@
       }
     }
 
-    async function submitVotes() {
-      const categoriesVoted = Object.keys(votes);
-      if (categoriesVoted.length < categories.length) {
-        alert("Please vote for each category before submitting!");
-        return;
-      }
+   async function submitVotes() {
+  const categoriesVoted = Object.keys(votes);
+  if (categoriesVoted.length < categories.length) {
+    alert("Please vote for each category before submitting!");
+    return;
+  }
 
-      for (const id of Object.values(votes)) {
-        await fetch(`/api/vote/${id}`, { method: 'POST' });
-      }
+  for (const category in votes) {
+    const id = votes[category];
+    await fetch(`/api/vote/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category }),
+    });
+  }
 
-      document.body.innerHTML = `
-        <h1>🎉 Thanks for Voting!</h1>
-        <p>Your votes have been recorded.</p>
-        <a href="/results.html">Click Here For The Results</a>
-      `;
-      localStorage.setItem('hasVoted', 'true');
-    }
+  document.body.innerHTML = `
+    <h1>🎉 Thanks for Voting!</h1>
+    <p>Your votes have been recorded.</p>
+    <a href="/results.html">Click Here For The Results</a>
+  `;
+  localStorage.setItem('hasVoted', 'true');
+}
+
 
     loadEntries();
   </script>

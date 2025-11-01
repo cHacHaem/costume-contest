@@ -10,8 +10,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // === CONFIG ===
-const SUBMISSION_END = new Date("2025-11-30T18:55:00"); // ✅ fixed invalid date
-const VOTING_END = new Date("2025-12-07T18:55:00");
+const SUBMISSION_END = new Date("2025-10-31T22:15:00"); // ✅ fixed invalid date
+const VOTING_END = new Date("2025-10-31T22:20:00");
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 
 // === DATABASE ===
@@ -125,6 +125,9 @@ app.post("/api/submit", upload.single("photo"), async (req, res) => {
 // === GET ENTRIES ===
 app.get("/api/entries", async (req, res) => {
   try {
+    if (new Date() >= VOTING_END) {
+      return res.status(403).json({ error: "Voting is closed!" });
+    }
     const { rows } = await pool.query(`
       SELECT *,
         (votes_homemade_diy + votes_Scariest + votes_Funniest + votes_Overall + votes_Family) AS total_votes
@@ -183,7 +186,7 @@ app.get("/api/results", async (req, res) => {
   try {
     const categories = ["homemade_diy", "Scariest", "Funniest", "Overall", "Family"];
     const results = {};
-
+console.log("Fetching results for categories:", categories);
     for (const category of categories) {
       const column = `votes_${category}`;
       const { rows } = await pool.query(`
