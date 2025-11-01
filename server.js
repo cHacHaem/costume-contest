@@ -10,8 +10,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // === CONFIG ===
-const SUBMISSION_END = new Date("2025-10-31T22:15:00"); // ✅ fixed invalid date
-const VOTING_END = new Date("2025-10-31T22:20:00");
+const SUBMISSION_END = new Date("2025-10-31T22:20:00"); // ✅ fixed invalid date
+const VOTING_END = new Date("2025-10-31T22:25:00");
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 
 // === DATABASE ===
